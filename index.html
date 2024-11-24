@@ -1,0 +1,204 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Big/Small Prediction App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Registration/Login Section -->
+  <div class="container" id="auth-section">
+    <h2>Register / Login</h2>
+    <input type="text" id="username" placeholder="Enter Username" />
+    <input type="email" id="email" placeholder="Enter Email" />
+    <input type="password" id="password" placeholder="Enter Password" />
+    <button onclick="registerUser()">Register</button>
+    <button onclick="loginUser()">Login</button>
+    <p id="auth-message"></p>
+  </div>
+
+  <!-- Main App Section -->
+  <div class="container hidden" id="app-section">
+    <h2>Welcome, <span id="user-name"></span>!</h2>
+    <input type="text" id="prediction-input" placeholder="Enter your prediction here" />
+    <button onclick="predictResult()">Get Result</button>
+    <p id="result-message"></p>
+
+    <h3>Registered Members</h3>
+    <table id="member-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- User details will be dynamically populated -->
+      </tbody>
+    </table>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html><style>body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f4f4f9;
+}
+
+.container {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 300px;
+}
+
+.container.hidden {
+  display: none;
+}
+
+input {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+button {
+  width: 95%;
+  padding: 10px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 10px 0;
+}
+
+button:hover {
+  background: #45a049;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+table th, table td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+}</style><script>// Store registered users
+let users = [];
+let currentUser = null;
+
+// Your Telegram Bot Token and Chat ID
+const TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN";
+const TELEGRAM_CHAT_ID = "YOUR_TELEGRAM_CHAT_ID";
+
+// Function to send user details to Telegram
+function sendToTelegram(message) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const data = {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: message,
+  };
+
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((result) => console.log("Sent to Telegram:", result))
+    .catch((error) => console.error("Telegram API Error:", error));
+}
+
+// Register user function
+function registerUser() {
+  const username = document.getElementById("username").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!username || !email || !password) {
+    document.getElementById("auth-message").innerText = "All fields are required!";
+    return;
+  }
+
+  const user = { username, email, password };
+  users.push(user);
+
+  // Send user details to Telegram
+  const message = `New Registration:\nUsername: ${username}\nEmail: ${email}`;
+  sendToTelegram(message);
+
+  document.getElementById("auth-message").innerText = "Registration successful! Please log in.";
+  clearAuthInputs();
+}
+
+// Login user function
+function loginUser() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  const user = users.find((u) => u.email === email && u.password === password);
+
+  if (user) {
+    currentUser = user;
+    loadApp();
+  } else {
+    document.getElementById("auth-message").innerText = "Invalid email or password!";
+  }
+}
+
+// Load app after login
+function loadApp() {
+  document.getElementById("auth-section").classList.add("hidden");
+  document.getElementById("app-section").classList.remove("hidden");
+  document.getElementById("user-name").innerText = currentUser.username;
+  populateMemberTable();
+}
+
+// Predict result function
+function predictResult() {
+  const result = Math.random() > 0.5 ? "Big" : "Small";
+  document.getElementById("result-message").innerText = `Result: ${result}`;
+}
+
+// Populate members table
+function populateMemberTable() {
+  const tableBody = document.getElementById("member-table").querySelector("tbody");
+  tableBody.innerHTML = ""; // Clear existing rows
+
+  users.forEach((user) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${user.username}</td><td>${user.email}</td>`;
+    tableBody.appendChild(row);
+  });
+}
+
+// Logout function
+function logout() {
+  currentUser = null;
+  document.getElementById("auth-section").classList.remove("hidden");
+  document.getElementById("app-section").classList.add("hidden");
+  clearAuthInputs();
+}
+
+// Clear input fields
+function clearAuthInputs() {
+  document.getElementById("username").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("password").value = "";
+}</script>
